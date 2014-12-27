@@ -616,7 +616,7 @@ describe 'AccessToken', ->
         err.statusCode.should.equal 403
 
 
-    describe 'with random string and insufficient scope', ->
+    describe 'with random string and insufficient scope defined as string', ->
 
       before (done) ->
         sinon.stub(AccessToken, 'get').callsArgWith(1, null, {
@@ -630,6 +630,134 @@ describe 'AccessToken', ->
           iss: server.settings.issuer
           key: server.settings.publicKey
           scope: 'other'
+        AccessToken.verify token, options, (error, data) ->
+          err    = error
+          claims = data
+          done()
+
+      after ->
+        AccessToken.get.restore()
+
+      it 'should provide an error', ->
+        err.error.should.equal 'insufficient_scope'
+
+      it 'should provide an error description', ->
+        err.error_description.should.equal 'Insufficient scope'
+
+      it 'should provide a status code', ->
+        err.statusCode.should.equal 403
+
+    describe 'with random string and insufficient scope defined as array of strings', ->
+
+      before (done) ->
+        sinon.stub(AccessToken, 'get').callsArgWith(1, null, {
+          iss:      server.settings.issuer
+          ei:       10000
+          scope:    'openid'
+          created:  nowSeconds()
+        })
+        token = 'r4nd0m'
+        options =
+          iss: server.settings.issuer
+          key: server.settings.publicKey
+          scope: ['openid', 'other']
+        AccessToken.verify token, options, (error, data) ->
+          err    = error
+          claims = data
+          done()
+
+      after ->
+        AccessToken.get.restore()
+
+      it 'should provide an error', ->
+        err.error.should.equal 'insufficient_scope'
+
+      it 'should provide an error description', ->
+        err.error_description.should.equal 'Insufficient scope'
+
+      it 'should provide a status code', ->
+        err.statusCode.should.equal 403
+
+
+    describe 'with random string and insufficient scope defined as space separated list', ->
+
+      before (done) ->
+        sinon.stub(AccessToken, 'get').callsArgWith(1, null, {
+          iss:      server.settings.issuer
+          ei:       10000
+          scope:    'openid'
+          created:  nowSeconds()
+        })
+        token = 'r4nd0m'
+        options =
+          iss: server.settings.issuer
+          key: server.settings.publicKey
+          scope: 'openid other'
+        AccessToken.verify token, options, (error, data) ->
+          err    = error
+          claims = data
+          done()
+
+      after ->
+        AccessToken.get.restore()
+
+      it 'should provide an error', ->
+        err.error.should.equal 'insufficient_scope'
+
+      it 'should provide an error description', ->
+        err.error_description.should.equal 'Insufficient scope'
+
+      it 'should provide a status code', ->
+        err.statusCode.should.equal 403
+
+
+    describe 'with random string and insufficient scope defined as regex', ->
+
+      before (done) ->
+        sinon.stub(AccessToken, 'get').callsArgWith(1, null, {
+          iss:      server.settings.issuer
+          ei:       10000
+          scope:    'openid'
+          created:  nowSeconds()
+        })
+        token = 'r4nd0m'
+        options =
+          iss: server.settings.issuer
+          key: server.settings.publicKey
+          scope: /foo|bar/
+        AccessToken.verify token, options, (error, data) ->
+          err    = error
+          claims = data
+          done()
+
+      after ->
+        AccessToken.get.restore()
+
+      it 'should provide an error', ->
+        err.error.should.equal 'insufficient_scope'
+
+      it 'should provide an error description', ->
+        err.error_description.should.equal 'Insufficient scope'
+
+      it 'should provide a status code', ->
+        err.statusCode.should.equal 403
+
+
+
+    describe 'with random string and insufficient scope defined as array of string and regexes', ->
+
+      before (done) ->
+        sinon.stub(AccessToken, 'get').callsArgWith(1, null, {
+          iss:      server.settings.issuer
+          ei:       10000
+          scope:    'openid'
+          created:  nowSeconds()
+        })
+        token = 'r4nd0m'
+        options =
+          iss: server.settings.issuer
+          key: server.settings.publicKey
+          scope: ['openid', /foo|bar/]
         AccessToken.verify token, options, (error, data) ->
           err    = error
           claims = data
@@ -665,6 +793,57 @@ describe 'AccessToken', ->
         options =
           iss: server.settings.issuer
           key: server.settings.publicKey
+        AccessToken.verify token, options, (error, data) ->
+          err    = error
+          claims = data
+          done()
+
+      after ->
+        AccessToken.get.restore()
+
+      it 'should provide a null error', ->
+        expect(err).to.be.null
+
+      it 'should provide "jti" claim', ->
+        claims.jti.should.equal instance.at
+
+      it 'should provide "iss" claim', ->
+        claims.iss.should.equal instance.iss
+
+      it 'should provide "sub" claim', ->
+        claims.sub.should.equal instance.uid
+
+      it 'should provide "aud" claim', ->
+        claims.aud.should.equal instance.cid
+
+      it 'should provide "iat" claim', ->
+        claims.iat.should.equal instance.created
+
+      it 'should provide "exp" claim', ->
+        claims.exp.should.equal instance.created + instance.ei
+
+      it 'should provide "scope" claim', ->
+        claims.scope.should.equal instance.scope
+
+
+    describe 'valid token with complex scope constraint', ->
+
+      before (done) ->
+        instance =
+          at:       'r4nd0m'
+          iss:      server.settings.issuer
+          uid:      'uuid1'
+          cid:      'uuid2'
+          ei:       10
+          scope:    'openid email'
+          created:  nowSeconds()
+
+        sinon.stub(AccessToken, 'get').callsArgWith(1, null, instance)
+        token = 'r4nd0m'
+        options =
+          iss: server.settings.issuer
+          key: server.settings.publicKey
+          scope: ['openid', /email|address/]
         AccessToken.verify token, options, (error, data) ->
           err    = error
           claims = data

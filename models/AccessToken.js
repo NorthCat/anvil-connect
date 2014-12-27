@@ -12,6 +12,7 @@ var async    = require('async')
   , UnauthorizedError      = require('../errors/UnauthorizedError')
   , InsufficientScopeError = require('../errors/InsufficientScopeError')
   , nowSeconds             = require('../lib/time-utils').nowSeconds
+  , _                      = require('lodash')
   ;
 
 
@@ -355,16 +356,42 @@ AccessToken.verify = function (token, options, callback) {
     }
 
     // insufficient scope
-    if (scope && claims.scope.indexOf(scope) === -1) {
-      return callback(new UnauthorizedError({
-        realm:              'user',
-        error:              'insufficient_scope',
-        error_description:  'Insufficient scope',
-        statusCode:          403
-      }));
+    // scope can be :
+    //    - a scope as string
+    //    - a regex
+    //    - an array of scopes as string and regexes
+    //    - a list of scopes as space separated strings
+    if (scope) {
+      var scopes = scope;
+      var claims_scope = claims.scope.split(' ');
+      if (_.isString(scope)) {
+        scopes = scope.split(' ');
+      } else if(_.isRegExp(scope)) {
+        scopes = [scope];
+      }
+      async.every(scopes, function(item, item_cb) {
+        if (_.isString(item)) {
+          return item_cb(claims_scope.indexOf(item) !== -1);
+        } else if (_.isRegExp(item)) {
+          return item_cb(_.some(claims_scope, function(tested_scope) {
+            return item.test(tested_scope);
+          }));
+        }
+        return item_cb(false);
+      }, function(passed) {
+        if(!passed) {
+          return callback(new UnauthorizedError({
+            realm:              'user',
+            error:              'insufficient_scope',
+            error_description:  'Insufficient scope',
+            statusCode:          403
+          }));
+        }
+        return callback(null, claims);
+      });
+    } else {
+      return callback(null, claims);
     }
-
-    callback(null, claims);
   });
 };
 
