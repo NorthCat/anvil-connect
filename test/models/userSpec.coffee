@@ -361,7 +361,31 @@ describe 'User', ->
         match.should.be.false
         done()
 
+  describe 'scoped UserInfo', ->
 
+    before ->
+      src  = email: Faker.Internet.email(), password: 'secret1337', name: 'John Doe', phoneNumber: '+1 (425) 555-1212'
+      user = new User src, { private: true }
+
+
+    it 'should return only the sub property', ->
+      info = user.scopedUserInfo 'otherScope'
+      info.should.have.property 'sub'
+      info.should.not.contain.keys ['email', 'phone_number', 'name']
+
+    it 'should return the sub and email properties', ->
+      info = user.scopedUserInfo 'email'
+      info.should.contain.keys ['sub', 'email']
+      info.should.not.contain.keys ['phone_number', 'name']
+
+    it 'should return the sub and name properties', ->
+      info = user.scopedUserInfo 'profile'
+      info.should.contain.keys ['sub', 'name']
+      info.should.not.contain.keys ['phone_number', 'email']
+
+    it 'should return the sub, email, phone_number and name properties', ->
+      info = user.scopedUserInfo 'profile email phone'
+      info.should.contain.keys ['sub', 'name', 'email', 'phone_number']
 
 
   describe 'authentication', ->

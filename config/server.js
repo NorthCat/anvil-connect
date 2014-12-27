@@ -533,6 +533,21 @@ module.exports = function (server) {
   server.set('scopes_supported', ['openid', 'profile']);
 
   /**
+   * scoped_userinfo
+   *    Anvil Connect supports two modes for the UserInfo end-point :
+   *      - Non-scoped : the complete UserInfo data is returned for AccessToken
+   *      with scope `profile`
+   *      - Scoped : UserInfo data is picked based on
+   *      http://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
+   *
+   *    Note that if `scope_userinfo` is set to `true`, `scopes_supported` SHOULD
+   *    be set to ['openid', 'profile', 'email', 'address', 'phone']
+   */
+
+  server.set('scoped_userinfo', false);
+
+
+  /**
    * OpenID Provider Discovery Metadata (Session)
    * http://openid.net/specs/openid-connect-session-1_0.html#OPMetadata
    *
@@ -662,6 +677,7 @@ module.exports = function (server) {
     'jwks_uri',
     'registration_endpoint',
     'scopes_supported',
+    'scoped_userinfo',
     'response_types_supported',
     'response_modes_supported',
     'grant_types_supported',
