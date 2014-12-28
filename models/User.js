@@ -9,6 +9,7 @@ var client                = require('../config/redis')
   , Document              = require('modinha-redis')
   , PasswordRequiredError = require('../errors/PasswordRequiredError')
   , InsecurePasswordError = require('../errors/InsecurePasswordError')
+  , _                     = require('lodash')
   ;
 
 
@@ -134,6 +135,66 @@ User.mappings.userinfo = {
   'modified':             'updated_at'
 };
 
+/**
+ * profile scope Mapping #5.4
+ */
+
+User.mappings.profile = {
+  '_id':                  'sub',
+  'name':                 'name',
+  'givenName':            'given_name',
+  'familyName':           'family_name',
+  'middleName':           'middle_name',
+  'nickname':             'nickname',
+  'preferredUsername':    'preferred_username',
+  'profile':              'profile',
+  'picture':              'picture',
+  'website':              'website',
+  'gender':               'gender',
+  'birthdate':            'birthdate',
+  'zoneinfo':             'zoneinfo',
+  'locale':               'locale',
+  'created':              'joined_at',
+  'modified':             'updated_at'
+};
+
+
+/**
+ * email scope Mapping #5.4
+ */
+
+User.mappings.email = {
+  '_id':                  'sub',
+  'email':                'email',
+  'emailVerified':        'email_verified',
+  'created':              'joined_at',
+  'modified':             'updated_at'
+};
+
+/**
+ * phone scope Mapping #5.4
+ */
+
+User.mappings.phone = {
+  '_id':                  'sub',
+  'phoneNumber':          'phone_number',
+  'phoneNumberVerified':  'phone_number_verified',
+  'created':              'joined_at',
+  'modified':             'updated_at'
+};
+
+
+/**
+ * address scope Mapping #5.4
+ */
+
+User.mappings.address = {
+  '_id':                  'sub',
+  'address':              'address',
+  'created':              'joined_at',
+  'modified':             'updated_at'
+};
+
 
 /**
  * Document persistence
@@ -178,6 +239,24 @@ User.prototype.authorizedScope = function (callback) {
     });
 
   });
+};
+
+
+/**
+ * Scoped UserInfo
+ */
+
+User.prototype.scopedUserInfo = function(scopes) {
+  var mapping = {'_id': 'sub'};
+  if (_.isString(scopes)) { scopes = scopes.split(' '); }
+  if (_.isArray(scopes) && scopes.length > 0) {
+    scopes.forEach(function (scope) {
+      if (_.has(User.mappings, scope)) {
+        mapping = _.assign(mapping, User.mappings[scope]);
+      }
+    });
+  }
+  return this.project(mapping);
 };
 
 

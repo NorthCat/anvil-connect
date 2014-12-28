@@ -437,6 +437,33 @@ module.exports = function (server) {
 
   server.set('op_tos_uri', undefined);
 
+  /**
+   * scopes_supported
+   *   RECOMMENDED. JSON array containing a list of the OAuth 2.0 [RFC6749] scope
+   *   values that this server supports. The server MUST support the openid scope
+   *   value. Servers MAY choose not to advertise some supported scope values
+   *   even when this parameter is used, although those defined in [OpenID.Core]
+   *   SHOULD be listed, if supported.
+   *
+   *   TODO: Should these be pulled from redis?
+   */
+
+  server.set('scopes_supported', ['openid', 'profile']);
+
+  /**
+   * scoped_userinfo
+   *    Anvil Connect supports two modes for the UserInfo end-point :
+   *      - Non-scoped : the complete UserInfo data is returned for AccessToken
+   *      with scope `profile`
+   *      - Scoped : UserInfo data is picked based on
+   *      http://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
+   *
+   *    Note that if `scope_userinfo` is set to `true`, `scopes_supported` SHOULD
+   *    be set to ['openid', 'profile', 'email', 'address', 'phone']
+   */
+
+  server.set('scoped_userinfo', false);
+
 
   /**
    * Load config file settings and override defaults
@@ -519,18 +546,6 @@ module.exports = function (server) {
 
   server.set('registration_endpoint', issuer + '/register');
 
-  /**
-   * scopes_supported
-   *   RECOMMENDED. JSON array containing a list of the OAuth 2.0 [RFC6749] scope
-   *   values that this server supports. The server MUST support the openid scope
-   *   value. Servers MAY choose not to advertise some supported scope values
-   *   even when this parameter is used, although those defined in [OpenID.Core]
-   *   SHOULD be listed, if supported.
-   *
-   *   TODO: Should these be pulled from redis?
-   */
-
-  server.set('scopes_supported', ['openid', 'profile']);
 
   /**
    * OpenID Provider Discovery Metadata (Session)
@@ -662,6 +677,7 @@ module.exports = function (server) {
     'jwks_uri',
     'registration_endpoint',
     'scopes_supported',
+    'scoped_userinfo',
     'response_types_supported',
     'response_modes_supported',
     'grant_types_supported',

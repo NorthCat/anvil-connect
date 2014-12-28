@@ -21,7 +21,11 @@ module.exports = function (server) {
       User.get(req.claims.sub, function (err, user) {
         if (err)   { return next(err); }
         if (!user) { return next(new NotFoundError()); }
-        res.json(200, user.project('userinfo'));
+        if(server.settings.scoped_userinfo === true) {
+          res.json(200, user.scopedUserInfo(req.claims.scope));
+        } else {
+          res.json(200, user.project('userinfo'));
+        }
       });
     });
 
