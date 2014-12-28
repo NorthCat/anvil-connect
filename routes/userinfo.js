@@ -15,7 +15,7 @@ module.exports = function (server) {
     oidc.verifyAccessToken({
       iss:    server.settings.issuer,
       key:    server.settings.publicKey,
-      scope: 'profile'
+      scope: server.settings.scoped_userinfo ? /openid|profile|email|address|phone/ : 'profile'
     }),
     function (req, res, next) {
       User.get(req.claims.sub, function (err, user) {
